@@ -101,7 +101,8 @@ extension ByteBuffer {
         return setInteger(ipv4.rawIPv4.s_addr.bigEndian, at: index)
     }
     
-    /// Get the IPv4 address at `index` from this `ByteBuffer`. Does not move the reader index.
+    /// Get the `IPv4` address at `index` from this `ByteBuffer`. Does not move the reader index.
+    /// The selected bytes must be readable or else nil will be returned.
     ///
     /// - note: Please consider using `readIPv4` which is a safer alternative that automatically maintains the
     ///         `readerIndex` and won't allow you to read uninitialized memory.
@@ -112,26 +113,24 @@ extension ByteBuffer {
     ///            safe to read.
     /// - parameters:
     ///    - index: The starting index into `ByteBuffer` containing the IPv4 address of interest.
-    /// - returns: A `IPv4` address and its byte size deserialized from this `ByteBuffer`
-    /// - throws: Throws a `ByteBufferError` if reading or decoding failed.
+    /// - returns: A `IPv4` address and its byte size deserialized from this `ByteBuffer` or nil if the bytes of interest are not readable.
     /// - precondition: `index` must not be negative.
-    public func getIPv4(at index: Int) throws -> (address: IPv4, byteSize: Int) {
-        guard let rawIPv4: UInt32 = getInteger(at: index) else {
-            throw ByteBufferError.notEnoughBytes
-        }
-        return (IPv4(in_addr(s_addr: rawIPv4.bigEndian)), MemoryLayout<UInt32>.size)
+    public func getIPv4(at index: Int) -> IPv4? {
+        getInteger(at: index)
+            .map { (rawIPv4: UInt32) -> IPv4 in
+                IPv4(in_addr(s_addr: rawIPv4.bigEndian))
+            }
     }
     
     /// Read an `IPv4` address off this `ByteBuffer`.
     ///
     /// Moves the reader index forward by the encoded size of a `IPv4` address.
     ///
-    /// - returns: A `IPv4` address deserialized from this `ByteBuffer`.
-    /// - throws: Throws a `ByteBufferError` if reading or decoding failed.
-    public mutating func readIPv4() throws -> IPv4 {
-        guard let rawIPv4: UInt32 = readInteger() else {
-            throw ByteBufferError.notEnoughBytes
-        }
-        return IPv4(in_addr(s_addr: rawIPv4.bigEndian))
+    /// - returns: A `IPv4` address deserialized from this `ByteBuffer` or nil if there aren’t enough bytes readable.
+    public mutating func readIPv4() -> IPv4? {
+        readInteger()
+            .map { (rawIPv4: UInt32) -> IPv4 in
+                IPv4(in_addr(s_addr: rawIPv4.bigEndian))
+            }
     }
 }

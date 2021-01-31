@@ -61,7 +61,6 @@ public struct IPv6 {
 
 extension IPv6: CustomStringConvertible {
     public var description: String {
-        #warning("Convert in correct truncated e.g. A::B:C:D representation or use C-function")
         return uint16Split
             .map { String($0.bigEndian, radix: 16) }
             .joined(separator: ":")
@@ -128,6 +127,7 @@ extension ByteBuffer {
     }
     
     /// Get the IPv6 address at `index` from this `ByteBuffer`. Does not move the reader index.
+    /// The selected bytes must be readable or else nil will be returned.
     ///
     /// - note: Please consider using `readIPv6` which is a safer alternative that automatically maintains the
     ///         `readerIndex` and won't allow you to read uninitialized memory.
@@ -138,33 +138,33 @@ extension ByteBuffer {
     ///            safe to read.
     /// - parameters:
     ///   - index: The starting index into `ByteBuffer` containing the IPv6 address of interest.
-    /// - returns: A `IPv6` address and its byte size deserialized from this `ByteBuffer`
-    /// - throws: Throws a `ByteBufferError` if reading or decoding failed.
+    /// - returns: A `IPv6` address and its byte size deserialized from this `ByteBuffer`  or nil if the bytes of interest are not readable.
     /// - precondition: `index` must not be negative.
-    public func getIPv6(at index: Int) throws -> (address: IPv6, byteSize: Int) {
-        var in6address = in6_addr()
-        guard index + MemoryLayout<IPv6>.size <= capacity else {
-            throw ByteBufferError.uninitializedMemory
+    public func getIPv6(at index: Int) -> IPv6? {
+        guard index + MemoryLayout<IPv6>.size <= writerIndex else {
+            return nil
         }
+        
+        var in6address = in6_addr()
         withVeryUnsafeBytes { bufferPointer in
             withUnsafeMutableBytes(of: &in6address) { ptr in
                 ptr.copyBytes(from: bufferPointer[index ..< index+MemoryLayout<IPv6>.size])
             }
         }
-        return (IPv6(in6address), MemoryLayout<IPv6>.size)
+        return IPv6(in6address)
     }
     
     /// Read an `IPv6` address off this `ByteBuffer`.
     ///
     /// Moves the reader index forward by the encoded size of a `IPv6` address.
     ///
-    /// - returns: A `IPv6` address deserialized from this `ByteBuffer`.
-    /// - throws: Throws a `ByteBufferError` if reading or decoding failed.
-    public mutating func readIPv6() throws -> IPv6 {
-        var in6address = in6_addr()
+    /// - returns: A `IPv6` address deserialized from this `ByteBuffer`  or nil if there aren’t enough bytes readable.
+    public mutating func readIPv6() -> IPv6? {
         guard readableBytes >= MemoryLayout<IPv6>.size else {
-            throw ByteBufferError.notEnoughBytes
+            return nil
         }
+        
+        var in6address = in6_addr()
         _ = readWithUnsafeReadableBytes { bufferPointer in
             withUnsafeMutableBytes(of: &in6address) { ptr in
                 ptr.copyBytes(from: bufferPointer[0..<MemoryLayout<IPv6>.size])

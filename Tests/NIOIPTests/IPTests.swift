@@ -59,6 +59,9 @@ final class IPTests: XCTestCase {
     }
     
     func testByteBufferGet() throws {
+        XCTAssertNil(byteBuffer.getIPv4(at: byteBuffer.readerIndex))
+        XCTAssertNil(byteBuffer.getIPv6(at: byteBuffer.readerIndex))
+        
         var currentIndex = byteBuffer.writerIndex
         for (_, ip, byteRepresentation) in Sample.ips {
             byteBuffer.setBytes(byteRepresentation, at: currentIndex)
@@ -66,15 +69,13 @@ final class IPTests: XCTestCase {
             let gotIP: IP
             switch ip {
             case .ipv4:
-                let ipv4 = try byteBuffer.getIPv4(at: currentIndex)
-                XCTAssertTrue(ipv4.byteSize == MemoryLayout<IPv4>.size)
-                currentIndex += ipv4.byteSize
-                gotIP = .ipv4(ipv4.address)
+                let ipv4 = try XCTUnwrap(byteBuffer.getIPv4(at: currentIndex))
+                currentIndex += MemoryLayout<IPv4>.size
+                gotIP = .ipv4(ipv4)
             case .ipv6:
-                let ipv6 = try byteBuffer.getIPv6(at: currentIndex)
-                XCTAssertTrue(ipv6.byteSize == MemoryLayout<IPv6>.size)
-                currentIndex += ipv6.byteSize
-                gotIP = .ipv6(ipv6.address)
+                let ipv6 = try XCTUnwrap(byteBuffer.getIPv6(at: currentIndex))
+                currentIndex += MemoryLayout<IPv4>.size
+                gotIP = .ipv6(ipv6)
             }
             XCTAssertTrue(ip == gotIP)
         }
@@ -82,16 +83,21 @@ final class IPTests: XCTestCase {
     }
     
     func testByteBufferRead() throws {
+        XCTAssertNil(byteBuffer.readIPv4())
+        XCTAssertNil(byteBuffer.readIPv6())
+        
         for (_, ip, byteRepresentation) in Sample.ips {
             let currentReaderIndex = byteBuffer.readerIndex
             byteBuffer.writeBytes(byteRepresentation)
             let gotIP: IP
             switch ip {
             case .ipv4:
-                gotIP = .ipv4(try byteBuffer.readIPv4())
+                let ipv4 = try XCTUnwrap(byteBuffer.readIPv4())
+                gotIP = .ipv4(ipv4)
                 XCTAssertTrue(byteBuffer.readerIndex == currentReaderIndex + MemoryLayout<IPv4>.size)
             case .ipv6:
-                gotIP = .ipv6(try byteBuffer.readIPv6())
+                let ipv6 = try XCTUnwrap(byteBuffer.readIPv6())
+                gotIP = .ipv6(ipv6)
                 XCTAssertTrue(byteBuffer.readerIndex == currentReaderIndex + MemoryLayout<IPv6>.size)
             }
             XCTAssertTrue(ip == gotIP)

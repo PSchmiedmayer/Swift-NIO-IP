@@ -100,9 +100,12 @@ extension ByteBuffer {
     ///   - returns: The number of bytes written.
     @discardableResult
     public mutating func write(ip: IP) -> Int {
-        let written = self.set(ip: ip, at: self.writerIndex)
-        self.moveWriterIndex(forwardBy: written)
-        return written
+        switch ip {
+        case let .ipv4(ipv4):
+            return self.write(ipv4: ipv4)
+        case let .ipv6(ipv6):
+            return self.write(ipv6: ipv6)
+        }
     }
     
     /// Write `ip` into this `ByteBuffer` at `index`. Does not move the writer index.
@@ -116,8 +119,10 @@ extension ByteBuffer {
     public mutating func set(ip: IP, at index: Int) -> Int {
         precondition(index >= 0, "index must not be negative")
         switch ip {
-        case let .ipv4(ipv4): return set(ipv4: ipv4, at: index)
-        case let .ipv6(ipv6): return set(ipv6: ipv6, at: index)
+            case let .ipv4(ipv4):
+                return set(ipv4: ipv4, at: index)
+            case let .ipv6(ipv6):
+                return set(ipv6: ipv6, at: index)
         }
     }
 }
