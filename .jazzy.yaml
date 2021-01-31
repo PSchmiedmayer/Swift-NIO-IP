@@ -1,4 +1,4 @@
-module: Swift NIO IP
+module: NIOIP
 author: Paul Schmiedmayer
 theme: fullwidth
 output: ./docs
