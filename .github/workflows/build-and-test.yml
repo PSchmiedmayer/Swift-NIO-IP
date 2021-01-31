@@ -39,12 +39,6 @@ jobs:
         linux: [bionic, xenial, focal, amazonlinux2, centos8]
     steps:
     - uses: actions/checkout@v2
-    - name: Install libsqlite3
-      if: ${{ !(startsWith( matrix.linux, 'centos' ) || startsWith( matrix.linux, 'amazonlinux' )) }}
-      run: apt-get update && apt-get install -y --no-install-recommends libsqlite3-dev
-    - name: Install libsqlite3
-      if: ${{ startsWith( matrix.linux, 'centos' ) || startsWith( matrix.linux, 'amazonlinux' ) }}
-      run: yum update -y && yum install -y sqlite-devel
     - name: Check Swift version
       run: swift --version
     - name: Build & Test
