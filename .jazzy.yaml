@@ -1,0 +1,7 @@
+module: Swift NIO IP
+author: Paul Schmiedmayer
+theme: fullwidth
+output: ./docs
+documentation: ./*.md
+author_url: https://github.com/PSchmiedmayer
+github_url: https://github.com/Pschmiedmayer/Swift-NIO-IP
